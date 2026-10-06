@@ -19,7 +19,7 @@ export default function RegisterScreen() {
         method: "POST",
         body: { email, password },
       });
-      await signIn(auth.accessToken);
+      await signIn(auth.accessToken, auth.refreshToken);
       router.replace("/home");
     } catch (caught) {
       setError(messageFor(caught));

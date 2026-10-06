@@ -23,7 +23,14 @@ type RequestOptions = {
   method?: string;
   token?: string | null;
   body?: unknown;
+  skipRenewal?: boolean;
 };
+
+let renewAccess: (() => Promise<string | null>) | null = null;
+
+export function setAccessRenewal(renew: () => Promise<string | null>) {
+  renewAccess = renew;
+}
 
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
@@ -47,6 +54,13 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
   const text = await response.text();
   const data = text ? JSON.parse(text) : null;
+  if (response.status === 401 && options.token && !options.skipRenewal && renewAccess) {
+    const next = await renewAccess();
+    if (next) {
+      return api<T>(path, { ...options, token: next, skipRenewal: true });
+    }
+  }
+
   if (!response.ok) {
     throw new ApiError(response.status, data?.code ?? "request_failed", data?.balanceCents, data?.priceCents);
   }
@@ -55,7 +69,17 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
 export type AuthResponse = {
   accessToken: string;
+  refreshToken: string;
   expiresIn: number;
+};
+
+export type WalletEntry = {
+  id: string;
+  kind: "purchase" | "top_up" | "cancellation";
+  amountCents: number;
+  serviceName: string | null;
+  createdAt: string;
+  cancelled: boolean;
 };
 
 export type WalletResponse = {
