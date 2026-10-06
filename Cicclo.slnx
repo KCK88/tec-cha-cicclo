@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Cicclo.Api/Cicclo.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Cicclo.Api.Tests/Cicclo.Api.Tests.csproj" />
+  </Folder>
+</Solution>
