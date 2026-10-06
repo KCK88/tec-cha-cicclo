@@ -33,7 +33,7 @@ public static class AuthEndpoints
             Id = Guid.NewGuid(),
             Email = email,
             PasswordHash = PasswordHasher.Hash(body.Password!),
-            BalanceCents = Wallet.InitialBalanceCents,
+            BalanceCents = WalletRules.InitialBalanceCents,
         };
         db.Users.Add(user);
 

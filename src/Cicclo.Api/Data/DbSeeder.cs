@@ -25,7 +25,7 @@ public static class DbSeeder
                 Id = Guid.NewGuid(),
                 Email = email,
                 PasswordHash = PasswordHasher.Hash(password),
-                BalanceCents = Wallet.InitialBalanceCents,
+                BalanceCents = WalletRules.InitialBalanceCents,
             });
         }
 
