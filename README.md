@@ -13,7 +13,7 @@ docker compose up -d
 dotnet run --project src/Cicclo.Api --urls http://0.0.0.0:8080
 ```
 
-A API aplica as migrations ao subir. Ela escuta em todas as interfaces, na porta 8080.
+A API aplica as migrations ao subir. Ela escuta em todas as interfaces, na porta 8080. O Postgres do Compose fica na porta 5433 do computador, para não brigar com um Postgres que já use a 5432.
 
 Conta pronta:
 
@@ -29,6 +29,8 @@ cd apps/mobile
 npm install
 npx expo start
 ```
+
+No navegador: `npx expo start --web` abre em `http://localhost:8081`.
 
 A URL da API fica em `apps/mobile/.env.development`:
 
