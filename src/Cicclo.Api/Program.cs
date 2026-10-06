@@ -1,6 +1,7 @@
 using System.Text;
 using Cicclo.Api.Auth;
 using Cicclo.Api.Data;
+using Cicclo.Api.Wallet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -18,6 +19,7 @@ if (jwt.SigningKey.Length < 32)
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<WalletService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -53,6 +55,7 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 AuthEndpoints.Map(app);
+WalletEndpoints.Map(app);
 
 app.Run();
 
