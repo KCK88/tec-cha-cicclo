@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Cicclo",
+    "slug": "cicclo",
+    "scheme": "cicclo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "dev.cicclo.lavanderia",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
+  }
+}
