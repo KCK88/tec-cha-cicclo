@@ -19,7 +19,12 @@ if (jwt.SigningKey.Length < 32)
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<JwtTokenService>();
+builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<WalletService>();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -50,6 +55,7 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 

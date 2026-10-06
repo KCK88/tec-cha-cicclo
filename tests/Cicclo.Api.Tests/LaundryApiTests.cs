@@ -103,6 +103,60 @@ public sealed class LaundryApiTests(ApiFactory factory)
         Assert.Equal(0, wallet!.BalanceCents);
     }
 
+    [Fact]
+    public async Task Top_up_and_purchase_show_up_in_the_statement()
+    {
+        var client = await RegisterAsync();
+
+        var topped = await client.PostAsJsonAsync("/wallet/top-ups", new { amountCents = 1_000 });
+        var purchase = await client.PostAsync($"/services/{Catalog.WashId}/purchases", null);
+        var entries = await client.GetFromJsonAsync<EntryBody[]>("/wallet/entries");
+        var wallet = await client.GetFromJsonAsync<WalletBody>("/wallet");
+
+        Assert.Equal(HttpStatusCode.OK, topped.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, purchase.StatusCode);
+        Assert.Equal(5_000 + 1_000 - 1_890, wallet!.BalanceCents);
+        Assert.Contains(entries!, entry => entry.Kind == "top_up" && entry.AmountCents == 1_000);
+        Assert.Contains(entries!, entry => entry.Kind == "purchase" && entry.ServiceName == "Lavagem" && !entry.Cancelled);
+    }
+
+    [Fact]
+    public async Task Cancelling_a_purchase_returns_the_cents_once()
+    {
+        var client = await RegisterAsync();
+        await client.PostAsync($"/services/{Catalog.WashId}/purchases", null);
+        var entries = await client.GetFromJsonAsync<EntryBody[]>("/wallet/entries");
+        var purchase = entries!.Single(entry => entry.Kind == "purchase");
+
+        var first = await client.PostAsync($"/wallet/entries/{purchase.Id}/cancellations", null);
+        var second = await client.PostAsync($"/wallet/entries/{purchase.Id}/cancellations", null);
+        var wallet = await client.GetFromJsonAsync<WalletBody>("/wallet");
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Equal(5_000, wallet!.BalanceCents);
+    }
+
+    [Fact]
+    public async Task Refresh_rotates_the_token_and_rejects_the_old_one()
+    {
+        var email = $"refresh-{Guid.NewGuid():N}@cicclo.dev";
+        var client = factory.CreateClient();
+        var registered = await client.PostAsJsonAsync("/auth/register", new { email, password = "senha-segura" });
+        var auth = await registered.Content.ReadFromJsonAsync<AuthBody>();
+
+        var refreshed = await client.PostAsJsonAsync("/auth/refresh", new { refreshToken = auth!.RefreshToken });
+        var next = await refreshed.Content.ReadFromJsonAsync<AuthBody>();
+        var reused = await client.PostAsJsonAsync("/auth/refresh", new { refreshToken = auth.RefreshToken });
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", next!.AccessToken);
+        var wallet = await client.GetAsync("/wallet");
+
+        Assert.Equal(HttpStatusCode.OK, refreshed.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, reused.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, wallet.StatusCode);
+    }
+
     private async Task<HttpClient> RegisterAsync()
     {
         var (client, _) = await RegisterWithEmailAsync();
@@ -133,7 +187,8 @@ public sealed class LaundryApiTests(ApiFactory factory)
         Assert.Equal(1, updated);
     }
 
-    private sealed record AuthBody(string AccessToken, int ExpiresIn);
+    private sealed record AuthBody(string AccessToken, string RefreshToken, int ExpiresIn);
+    private sealed record EntryBody(Guid Id, string Kind, int AmountCents, string? ServiceName, bool Cancelled);
     private sealed record WalletBody(int BalanceCents);
     private sealed record BalanceError(string Code, int BalanceCents, int PriceCents);
 }

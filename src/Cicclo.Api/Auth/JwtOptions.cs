@@ -8,4 +8,5 @@ public sealed class JwtOptions
     public string Audience { get; set; } = "";
     public string SigningKey { get; set; } = "";
     public int AccessTokenHours { get; set; } = 8;
+    public int RefreshTokenDays { get; set; } = 30;
 }

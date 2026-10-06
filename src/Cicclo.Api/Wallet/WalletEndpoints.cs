@@ -10,6 +10,9 @@ public static class WalletEndpoints
     {
         app.MapGet("/services", ListServices).RequireAuthorization();
         app.MapGet("/wallet", GetWallet).RequireAuthorization();
+        app.MapGet("/wallet/entries", ListEntries).RequireAuthorization();
+        app.MapPost("/wallet/top-ups", TopUp).RequireAuthorization();
+        app.MapPost("/wallet/entries/{id:guid}/cancellations", Cancel).RequireAuthorization();
         app.MapPost("/services/{id:guid}/purchases", Purchase).RequireAuthorization();
     }
 
@@ -44,6 +47,62 @@ public static class WalletEndpoints
             : Results.Ok(new { balanceCents = balance.Value });
     }
 
+    private static async Task<IResult> ListEntries(HttpContext http, WalletService wallet, CancellationToken cancellationToken)
+    {
+        var userId = CurrentUser.Id(http);
+        if (userId is null)
+            return Results.Unauthorized();
+
+        var entries = await wallet.Entries(userId.Value, cancellationToken);
+        return Results.Ok(entries.Select(entry => new
+        {
+            id = entry.Id,
+            kind = entry.Kind,
+            amountCents = entry.AmountCents,
+            serviceName = entry.ServiceName,
+            createdAt = entry.CreatedAt,
+            cancelled = entry.Cancelled,
+        }));
+    }
+
+    private static async Task<IResult> TopUp(
+        TopUpRequest body,
+        HttpContext http,
+        WalletService wallet,
+        CancellationToken cancellationToken)
+    {
+        var userId = CurrentUser.Id(http);
+        if (userId is null)
+            return Results.Unauthorized();
+
+        var result = await wallet.TopUp(userId.Value, body.AmountCents ?? 0, cancellationToken);
+        return Credit(result);
+    }
+
+    private static async Task<IResult> Cancel(
+        Guid id,
+        HttpContext http,
+        WalletService wallet,
+        CancellationToken cancellationToken)
+    {
+        var userId = CurrentUser.Id(http);
+        if (userId is null)
+            return Results.Unauthorized();
+
+        var result = await wallet.Cancel(userId.Value, id, cancellationToken);
+        return Credit(result);
+    }
+
+    private static IResult Credit(CreditResult result) => result.Status switch
+    {
+        CreditStatus.Ok => Results.Ok(new { balanceCents = result.BalanceCents }),
+        CreditStatus.MissingUser => Results.Unauthorized(),
+        CreditStatus.MissingEntry => Results.NotFound(new { code = "entry_not_found" }),
+        CreditStatus.NotAPurchase => Results.Conflict(new { code = "not_a_purchase" }),
+        CreditStatus.AlreadyCancelled => Results.Conflict(new { code = "already_cancelled" }),
+        _ => Results.BadRequest(new { code = "invalid_request", message = "Informe um valor em centavos maior que zero." }),
+    };
+
     private static async Task<IResult> Purchase(
         Guid id,
         HttpContext http,
@@ -74,4 +133,6 @@ public static class WalletEndpoints
             }),
         };
     }
+
+    public sealed record TopUpRequest(int? AmountCents);
 }
