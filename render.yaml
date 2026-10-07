@@ -1,0 +1,23 @@
+databases:
+  - name: cicclo-db
+    plan: free
+    region: oregon
+    databaseName: cicclo
+    user: cicclo
+
+services:
+  - type: web
+    name: cicclo-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cicclo-db
+          property: connectionString
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production

@@ -70,16 +70,28 @@ Os testes sobem um PostgreSQL com Testcontainers. Eles cobrem o que muda dinheir
 
 O perfil `preview` em `apps/mobile/eas.json` gera um APK Android.
 
+Build publicada:
+
+https://expo.dev/accounts/claudiombs/projects/cicclo/builds/2d6ddbf8-adee-4e7b-abbf-e3078ec5ec62
+
+Essa build foi gerada com `http://localhost:8080`. No celular a chamada não chega na API. O app abre; o login falha na rede até uma URL pública entrar numa build nova.
+
 ```bash
 cd apps/mobile
 npx eas-cli build -p android --profile preview
 ```
 
-O comando pede uma conta Expo e roda o build na nuvem. O arquivo não vai no Git.
+O comando pede uma conta Expo e roda o build na nuvem. O arquivo não vai no Git. A URL pública precisa estar em `env.EXPO_PUBLIC_API_URL` no perfil `preview` antes desse comando.
+
+## Publicar a API
+
+A API vai para a Render, com Postgres no mesmo lugar. O `render.yaml` cria `cicclo-api` e `cicclo-db` em Oregon, no plano gratuito. No painel: New → Blueprint, repositório `KCK88/tec-cha-cicclo`.
+
+`GET /health` na URL `https://….onrender.com` responde `{ "status": "ok" }`. O serviço gratuito dorme; a primeira chamada depois disso pode levar cerca de um minuto. O banco gratuito expira em 30 dias. O passo a passo está em `docs/development.md`.
 
 ## A fazer
 
-Gerar o APK com a conta Expo, pelo comando acima, e instalar no celular.
+Instalar o APK pelo link acima. A integração desse app com a API publicada, e um pipeline que rode `dotnet test` no push e gere o APK, ficam como melhoria: a URL HTTPS entra no `eas.json` e só então vale outra build.
 
 ## Com mais tempo
 

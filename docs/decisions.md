@@ -90,6 +90,24 @@ O banco do desafio não toma a porta padrão de um Postgres local. O teste não 
 
 SQLite para o desafio. Foi descartado porque o `UPDATE` condicional e o comportamento de concorrência precisavam do Postgres de verdade.
 
+## API publicada na Render
+
+### Contexto
+
+O APK de release precisa de uma URL HTTPS. No celular, `localhost` não alcança a API deste computador.
+
+### Decisão
+
+A API sobe com o `Dockerfile` na Render, plano gratuito, junto com um Postgres 16 também gratuito, os dois em Oregon. O `render.yaml` liga `DATABASE_URL` ao banco. A API escuta `PORT` e aplica as migrations ao subir.
+
+### Motivo
+
+O repositório já está no GitHub, a Render entrega HTTPS e o plano gratuito cobre a entrega. Não entra chave nova no Git: a de desenvolvimento já versionada continua valendo, e o painel pode sobrescrever `Jwt__SigningKey`.
+
+### Alternativas consideradas
+
+Railway ou Fly.io a partir da máquina, com CLI. Foi descartado porque não havia sessão nessas contas, e o caminho pelo GitHub evita instalar outra ferramenta. Um túnel para a API local foi descartado porque deixa de existir quando o computador desliga.
+
 ## App e API no mesmo repositório, sem camadas extras
 
 ### Contexto
