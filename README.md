@@ -70,11 +70,13 @@ Os testes sobem um PostgreSQL com Testcontainers. Eles cobrem o que muda dinheir
 
 O perfil `preview` em `apps/mobile/eas.json` gera um APK Android.
 
-Build publicada:
+Build com a API publicada (`https://cicclo-api.onrender.com`):
+
+https://expo.dev/accounts/claudiombs/projects/cicclo/builds/ba0b8b9f-7436-4969-99cb-b8168c6a690a
+
+O APK aparece nessa página quando a compilação termina. A build anterior usava `http://localhost:8080` e, no celular, não alcança a API:
 
 https://expo.dev/accounts/claudiombs/projects/cicclo/builds/2d6ddbf8-adee-4e7b-abbf-e3078ec5ec62
-
-Essa build foi gerada com `http://localhost:8080`. No celular a chamada não chega na API. O app abre; o login falha na rede até uma URL pública entrar numa build nova.
 
 ```bash
 cd apps/mobile
@@ -85,13 +87,13 @@ O comando pede uma conta Expo e roda o build na nuvem. O arquivo não vai no Git
 
 ## Publicar a API
 
-A API vai para a Render, com Postgres no mesmo lugar. O `render.yaml` cria `cicclo-api` e `cicclo-db` em Oregon, no plano gratuito. No painel: New → Blueprint, repositório `KCK88/tec-cha-cicclo`.
+A API está em `https://cicclo-api.onrender.com`, com Postgres no mesmo lugar. O `render.yaml` criou `cicclo-api` e `cicclo-db` em Oregon, no plano gratuito.
 
-`GET /health` na URL `https://….onrender.com` responde `{ "status": "ok" }`. O serviço gratuito dorme; a primeira chamada depois disso pode levar cerca de um minuto. O banco gratuito expira em 30 dias. O passo a passo está em `docs/development.md`.
+`GET /health` responde `{ "status": "ok" }`. O serviço gratuito dorme; a primeira chamada depois disso pode levar cerca de um minuto. O banco gratuito expira em 30 dias. O passo a passo está em `docs/development.md`.
 
 ## A fazer
 
-Instalar o APK pelo link acima. A integração desse app com a API publicada, e um pipeline que rode `dotnet test` no push e gere o APK, ficam como melhoria: a URL HTTPS entra no `eas.json` e só então vale outra build.
+Instalar o APK da build nova, a que aponta para `https://cicclo-api.onrender.com`. A conta de desenvolvimento continua `usuario@cicclo.dev`. Um pipeline que rode `dotnet test` no push, faça o deploy e gere o APK continua como melhoria.
 
 ## Com mais tempo
 
