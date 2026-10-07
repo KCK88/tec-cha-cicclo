@@ -9,7 +9,7 @@ import {
   type WalletEntry,
   type WalletResponse,
 } from "../api";
-import { formatBrl } from "../money";
+import { formatBrl, maskReaisInput, reaisToCents } from "../money";
 import { useSession } from "../session";
 
 export default function HomeScreen() {
@@ -84,7 +84,7 @@ export default function HomeScreen() {
     const amountCents = reaisToCents(topUp);
     if (amountCents === null) {
       setMessageIsError(true);
-      setMessage("Informe um valor em reais, como 10 ou 10,50.");
+      setMessage("Informe um valor maior que zero.");
       return;
     }
     setPendingId("top-up");
@@ -157,11 +157,12 @@ export default function HomeScreen() {
       <Text style={styles.section}>Recarga</Text>
       <View style={styles.row}>
         <TextInput
-          keyboardType="decimal-pad"
-          placeholder="Valor em reais"
+          keyboardType="number-pad"
+          inputMode="numeric"
+          placeholder="0,00"
           style={styles.input}
           value={topUp}
-          onChangeText={setTopUp}
+          onChangeText={(value) => setTopUp(maskReaisInput(value))}
         />
         <Pressable style={styles.button} disabled={pendingId !== null} onPress={addCredit}>
           <Text style={styles.buttonText}>{pendingId === "top-up" ? "..." : "Recarregar"}</Text>
@@ -184,15 +185,6 @@ export default function HomeScreen() {
       ))}
     </ScrollView>
   );
-}
-
-function reaisToCents(value: string) {
-  const normalized = value.trim().replace(",", ".");
-  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
-    return null;
-  }
-  const cents = Math.round(Number(normalized) * 100);
-  return cents > 0 ? cents : null;
 }
 
 function entryLabel(entry: WalletEntry) {

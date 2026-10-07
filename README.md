@@ -13,6 +13,8 @@ docker compose up -d
 dotnet run --project src/Cicclo.Api --urls http://0.0.0.0:8080
 ```
 
+No Rider, abra `Cicclo.sln` (o arquivo clássico, ao lado do `Cicclo.slnx`). Defina `Cicclo.Api` como projeto de inicialização e execute o perfil `http`. O Postgres precisa estar no ar antes, senão a API para na migration.
+
 A API aplica as migrations ao subir. Ela escuta em todas as interfaces, na porta 8080. O Postgres do Compose fica na porta 5433 do computador, para não brigar com um Postgres que já use a 5432.
 
 Conta pronta:
@@ -78,3 +80,29 @@ O comando pede uma conta Expo e roda o build na nuvem. O arquivo não vai no Git
 ## A fazer
 
 Gerar o APK com a conta Expo, pelo comando acima, e instalar no celular.
+
+## Com mais tempo
+
+A API está em um projeto e as telas estão em `apps/mobile/src/app`. A regra do saldo cabe nesse fluxo, e o tempo foi para a compra, a concorrência e os testes.
+
+Se o domínio crescer (mais serviços, máquinas, várias lavanderias), eu separaria assim:
+
+```text
+mobile/src/
+├── app/            rotas do Expo
+├── screens/
+├── components/
+├── services/
+├── hooks/
+├── types/
+└── utils/
+
+backend/
+├── Cicclo.Domain/           usuário, serviço, lançamento e a regra dos centavos
+├── Cicclo.Application/      comprar, recarregar, cancelar e login
+├── Cicclo.Infrastructure/   Postgres, hash da senha e JWT
+├── Cicclo.Api/              endpoints
+└── tests/
+```
+
+`app/` continua existindo porque o Expo Router precisa da pasta de rotas. As telas em si passariam para `screens/`. A regra do `UPDATE` condicional seguiria a mesma; só mudaria de projeto, da API para a Infrastructure, chamada pela Application.
